@@ -1,0 +1,41 @@
+= openshift-oauth-client-manager
+
+Operator to make management of OpenShift OAuthClients simpler.
+
+== Purpose
+
+The design of OpenShift OAuthClient objects embed a secret value directly in the resource.
+This makes it more difficult to manage OAuthClient objects to integrate with secret management tools.
+
+This operator creates a new OAuthClientConfig resource which supports using a secret reference to manage OAuthClient objects.
+
+== Example Configuration
+
+Example configuration:
+
+----
+apiVersion: rhpds.redhat.com/v1
+kind: OAuthClientConfig
+metadata:
+  name: example-client
+spec:
+  grantMethod: auto
+  redirectURIs:
+  - https://client.example.com/oauth/callback
+  secretRef:
+    name: example-client
+    namespace: openshift-config
+----
+
+Will create:
+
+----
+apiVersion: oauth.openshift.io/v1
+grantMethod: auto
+kind: OAuthClient
+metadata:
+  name: example-client
+redirectURIs:
+- https://client.example.com/oauth/callback
+secret: <value from secret data.secret>
+----

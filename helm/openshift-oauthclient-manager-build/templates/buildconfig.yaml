@@ -1,0 +1,25 @@
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: {{ include "openshift-oauthclient-manager-build.name" . }}
+  labels:
+    {{- include "openshift-oauthclient-manager-build.labels" . | nindent 4 }}
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: {{ include "openshift-oauthclient-manager-build.name" . }}:latest
+  postCommit: {}
+  resources: {}
+  runPolicy: Serial
+  source:
+    git:
+      uri: {{ .Values.gitRepo }}
+      ref: main
+  strategy:
+    dockerStrategy:
+      dockerfilePath: Containerfile
+      forcePull: true
+    type: docker
+  triggers: []

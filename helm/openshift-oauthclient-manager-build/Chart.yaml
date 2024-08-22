@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: openshift-oauthclient-manager-build
+description: Chart for OpenShift BuildConfig and ImageStream
+type: application
+version: 0.0.0
+appVersion: 0.0.0

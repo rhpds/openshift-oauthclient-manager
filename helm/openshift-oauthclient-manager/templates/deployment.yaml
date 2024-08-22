@@ -1,0 +1,57 @@
+{{- if not .Values.odo }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openshift-oauthclient-manager.name" . }}
+  labels:
+    {{- include "openshift-oauthclient-manager.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "openshift-oauthclient-manager.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        {{- include "openshift-oauthclient-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "openshift-oauthclient-manager.serviceAccountName" . }}
+      containers:
+      - name: openshift-oauthclient-manager
+        env:
+        {{- range $k, $v := .Values.envVars }}
+        - name: {{ $k }}
+          value: {{ quote $v }}
+        {{- end }}
+        image: "{{ include "openshift-oauthclient-manager.image" . }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end -}}

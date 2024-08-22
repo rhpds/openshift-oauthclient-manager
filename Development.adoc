@@ -1,0 +1,88 @@
+# Development for openshift-oauthclient-manager
+
+Development on this operator can be performed in the `odo` OpenShift developer
+CLI or building with OpenShift build configs.
+An OpenShift cluster with cluster-admin is required for `odo` development.
+https://developers.redhat.com/products/codeready-containers/overview[CodeReady Containers]
+is recommended for local development.
+An Ansible test suite is available for functional testing.
+
+## Development with `odo`
+
+Use of `odo` is recommended for fast iterative development.
+`odo` simplifies the build/deploy process and avoids creating unnecessary build
+artifacts during the development process.
+
+. Install the `odo` developer CLI as described in the
+
+. Create resources required for development with odo from helm chart:
++
+----------------------------------------------------------------------------------------------
+helm template helm/openshift-oauthclient-manager --include-crds --set odo=true | oc apply -f -
+----------------------------------------------------------------------------------------------
+
+. Set project to openshift-oauthclient-manager namespace
++
+----------------------------------------
+oc project openshift-oauthclient-manager
+----------------------------------------
+
+. Grant privileges for role `openshift-oauthclient-manager` to default service account:
++
+------------------------------------------------------------------------
+oc policy add-role-to-user --role-namespace=openshift-oauthclient-manager replik8s -z default
+------------------------------------------------------------------------
+
+. Start application with odo:
++
+-------
+odo dev
+-------
+
+. Run tests
++
+------
+ansible-playbook test/playbook.yaml -e ansible_python_interpreter={{ansible_playbook_python}}
+------
+
+. Check logs:
++
+--------
+odo logs
+--------
+
+== Building
+
+The helm tomplate provided includes build configuration for OpenShift:
+
+. Create OpenShift BuildConfig and ImageStream
++
+----------------------------------------------------------------------
+helm template helm/openshift-oauthclient-manager-build | oc apply -f -
+----------------------------------------------------------------------
+
+. Build image:
++
+------------------------------------------------------------------------
+oc start-build openshift-oauthclient-manager-build --from-dir=. --follow
+------------------------------------------------------------------------
+
+. Deploy replik8s from build image:
++
+--------------------------------------------------------------------------------
+helm template helm/openshift-oauthclient-manager --include-crds \
+--set=image.override=$(oc get imagestream openshift-oauthclient-manager-build -o jsonpath='{.status.tags[?(@.tag=="latest")].items[0].dockerImageReference}') \
+| oc apply -f -
+--------------------------------------------------------------------------------
+
+. Run tests
++
+--------------------------------------------------------------------------------
+ansible-playbook test/playbook.yaml -e ansible_python_interpreter={{ansible_playbook_python}}
+--------------------------------------------------------------------------------
+
+. Check logs:
++
+------------------------------------------------
+oc logs deployment/openshift-oauthclient-manager
+------------------------------------------------

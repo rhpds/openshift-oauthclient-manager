@@ -1,0 +1,139 @@
+---
+- name: Create test-openshift-oauthclient-manager Secret
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: test-openshift-oauthclient-manager
+        namespace: "{{ namespace }}"
+      data:
+        secret: "{{ test_oauthclient_secret | b64encode }}"
+
+- name: Create test-openshift-oauthclient-manager OAuthClientConfig
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: rhpds.redhat.com/v1
+      kind: OAuthClientConfig
+      metadata:
+        name: test-openshift-oauthclient-manager
+      spec:
+        grantMethod: prompt
+        redirectURIs:
+        - https://test.example.com/oauth
+        secret:
+          name: test-openshift-oauthclient-manager
+          namespace: "{{ namespace }}"
+
+- name: Get test-openshift-oauthclient-manager OAuthClient
+  kubernetes.core.k8s_info:
+    api_version: oauth.openshift.io/v1
+    kind: OAuthClient
+    name: test-openshift-oauthclient-manager
+  register: r_get_oauthclient
+  failed_when: r_get_oauthclient.resources | length != 1
+  retries: 10
+  delay: 1
+
+- name: Verify test-openshift-oauthclient-manager OAuthClient
+  vars:
+    __oauthclient: "{{ r_get_oauthclient.resources[0] }}"
+  assert:
+    that:
+    - __oauthclient.grantMethod == 'prompt'
+    - __oauthclient.redirectURIs == ['https://test.example.com/oauth']
+    - __oauthclient.secret == test_oauthclient_secret
+      
+- name: Update test-openshift-oauthclient-manager OAuthClientConfig
+  kubernetes.core.k8s:
+    api_version: rhpds.redhat.com/v1
+    kind: OAuthClientConfig
+    name: test-openshift-oauthclient-manager
+    definition:
+      spec:
+        redirectURIs:
+        - https://test.example.com/oauth
+        - https://test.example.com/oauth2
+
+- name: Verify test-openshift-oauthclient-manager OAuthClient update
+  kubernetes.core.k8s_info:
+    api_version: oauth.openshift.io/v1
+    kind: OAuthClient
+    name: test-openshift-oauthclient-manager
+  register: r_get_oauthclient
+  failed_when: >-
+    r_get_oauthclient.resources | length != 1 or
+    r_get_oauthclient.resources[0].redirectURIs != ['https://test.example.com/oauth', 'https://test.example.com/oauth2']
+  retries: 10
+  delay: 1
+
+- name: Update test-openshift-oauthclient-manager Secret
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    name: test-openshift-oauthclient-manager
+    namespace: "{{ namespace }}"
+    definition:
+      data:
+        secret: "{{ test_oauthclient_secret_update | b64encode }}"
+
+- name: Verify test-openshift-oauthclient-manager OAuthClient update
+  kubernetes.core.k8s_info:
+    api_version: oauth.openshift.io/v1
+    kind: OAuthClient
+    name: test-openshift-oauthclient-manager
+  register: r_get_oauthclient
+  failed_when: >-
+    r_get_oauthclient.resources | length != 1 or
+    r_get_oauthclient.resources[0].secret != test_oauthclient_secret_update
+  retries: 15
+  delay: 3
+
+- name: Create test-openshift-oauthclient-manager-addtl Secret
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: test-openshift-oauthclient-manager-addtl
+        namespace: "{{ namespace }}"
+      data:
+        secret: "{{ test_oauthclient_additional_secret | b64encode }}"
+
+- name: Update test-openshift-oauthclient-manager OAuthClientConfig
+  kubernetes.core.k8s:
+    api_version: rhpds.redhat.com/v1
+    kind: OAuthClientConfig
+    name: test-openshift-oauthclient-manager
+    definition:
+      spec:
+        additionalSecrets:
+        - name: test-openshift-oauthclient-manager-addtl
+          namespace: "{{ namespace }}"
+
+- name: Verify test-openshift-oauthclient-manager OAuthClient update
+  kubernetes.core.k8s_info:
+    api_version: oauth.openshift.io/v1
+    kind: OAuthClient
+    name: test-openshift-oauthclient-manager
+  register: r_get_oauthclient
+  failed_when: >-
+    r_get_oauthclient.resources | length != 1 or
+    r_get_oauthclient.resources[0].additionalSecrets != [test_oauthclient_additional_secret]
+  retries: 10
+  delay: 1
+
+- name: Delete test-openshift-oauthclient-manager OAuthClientConfig
+  kubernetes.core.k8s:
+    api_version: rhpds.redhat.com/v1
+    kind: OAuthClientConfig
+    name: test-openshift-oauthclient-manager
+    state: absent
+
+- name: Verify test-openshift-oauthclient-manager OAuthClient delete
+  kubernetes.core.k8s_info:
+    api_version: oauth.openshift.io/v1
+    kind: OAuthClient
+    name: test-openshift-oauthclient-manager
+  register: r_get_oauthclient
+  failed_when: r_get_oauthclient.resources | length != 0

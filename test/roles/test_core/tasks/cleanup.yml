@@ -1,0 +1,15 @@
+---
+- name: Delete test-openshift-oauthclient-manager OAuthClientConfig
+  kubernetes.core.k8s:
+    api_version: rhpds.redhat.com/v1
+    kind: OAuthClientConfig
+    name: test-openshift-oauthclient-manager
+    state: absent
+
+- name: Delete test-openshift-oauthclient-manager Secret
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    name: test-openshift-oauthclient-manager
+    namespace: "{{ namespace }}"
+    state: absent

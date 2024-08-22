@@ -1,0 +1,39 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "openshift-oauthclient-manager.name" . }}
+  labels:
+    {{- include "openshift-oauthclient-manager.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - rhpds.redhat.com
+  resources:
+  - oauthclientconfigs
+  - oauthclientconfigs/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oauth.openshift.io
+  resources:
+  - oauthclients
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get

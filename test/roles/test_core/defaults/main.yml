@@ -1,0 +1,4 @@
+---
+test_oauthclient_secret: not-at-all-secure
+test_oauthclient_secret_update: still-not-at-all-secure
+test_oauthclient_additional_secret: now-this-is-different
