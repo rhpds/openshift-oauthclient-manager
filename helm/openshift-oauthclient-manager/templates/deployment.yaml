@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "openshift-oauthclient-manager.name" . }}
+  namespace: {{ include "openshift-oauthclient-manager.namespaceName" . }}
   labels:
     {{- include "openshift-oauthclient-manager.labels" . | nindent 4 }}
 spec:
